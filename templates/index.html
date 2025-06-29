@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Predicción de victoria en partida</title>
+</head>
+<body>
+    <h2>Ingresa las estadísticas de la ronda</h2>
+    <form method="POST">
+        <label for="kills">Kills en el Match:</label>
+<input type="number" step="1" min="0" name="kills" required><br>
+
+<label for="flank_kills">Flank Kills en el Match:</label>
+<input type="number" step="1" min="0" name="flank_kills" required><br>
+
+<label for="headshots">Headshots en el Match:</label>
+<input type="number" step="1" min="0" name="headshots" required><br>
+
+
+        <input type="submit" value="Predecir">
+    </form>
+
+    {% if prediction is not none %}
+    <h3>Resultado:</h3>
+    <p><strong>Predicción:</strong> {{ prediction }}</p>
+
+    <h4>Valores ingresados:</h4>
+    <ul>
+        <li>Kills: {{ raw_input.kills }}</li>
+        <li>Flank Kills: {{ raw_input.flank_kills }}</li>
+        <li>Headshots: {{ raw_input.headshots }}</li>
+    </ul>
+
+    <h4>Transformación (log1p):</h4>
+    <ul>
+        <li>log1p(Kills): {{ transformed[0] }}</li>
+        <li>log1p(Flank Kills): {{ transformed[1] }}</li>
+        <li>log1p(Headshots): {{ transformed[2] }}</li>
+    </ul>
+{% endif %}
+
+</body>
+</html>
