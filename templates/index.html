@@ -2,41 +2,104 @@
 <html>
 <head>
     <title>Predicción de victoria en partida</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .warning { color: orange; font-weight: bold; }
+        .success { color: green; }
+        .info { color: blue; }
+        .result-box { 
+            border: 1px solid #ccc; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            background-color: #f9f9f9; 
+        }
+        .averages { 
+            background-color: #e7f3ff; 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin: 10px 0; 
+        }
+    </style>
 </head>
 <body>
-    <h2>Ingresa las estadísticas de la ronda</h2>
+    <h2>Predicción de Victoria en Partida</h2>
+    
+    {% if model_averages %}
+    <div class="averages">
+        <h4>📊 Promedios del modelo:</h4>
+        <ul>
+            <li>Kills promedio: ~{{ model_averages.kills }}</li>
+            <li>Headshots promedio: ~{{ model_averages.headshots }}</li>
+            <li>Flank Kills promedio: ~{{ model_averages.flank_kills }}</li>
+        </ul>
+    </div>
+    {% endif %}
+
     <form method="POST">
         <label for="kills">Kills en el Match:</label>
-<input type="number" step="1" min="0" name="kills" required><br>
+        <input type="number" step="1" min="0" name="kills" required><br><br>
 
-<label for="flank_kills">Flank Kills en el Match:</label>
-<input type="number" step="1" min="0" name="flank_kills" required><br>
+        <label for="flank_kills">Flank Kills en el Match:</label>
+        <input type="number" step="1" min="0" name="flank_kills" required><br><br>
 
-<label for="headshots">Headshots en el Match:</label>
-<input type="number" step="1" min="0" name="headshots" required><br>
-
+        <label for="headshots">Headshots en el Match:</label>
+        <input type="number" step="1" min="0" name="headshots" required><br><br>
 
         <input type="submit" value="Predecir">
     </form>
 
     {% if prediction is not none %}
-    <h3>Resultado:</h3>
-    <p><strong>Predicción:</strong> {{ prediction }}</p>
+    <div class="result-box">
+        <h3>🎯 Resultado de la Predicción:</h3>
+        <p><strong>Predicción:</strong> {{ prediction }}</p>
 
-    <h4>Valores ingresados:</h4>
-    <ul>
-        <li>Kills: {{ raw_input.kills }}</li>
-        <li>Flank Kills: {{ raw_input.flank_kills }}</li>
-        <li>Headshots: {{ raw_input.headshots }}</li>
-    </ul>
+        {% if victory_probability %}
+        <p><strong>Probabilidad de Victoria:</strong> {{ victory_probability }}%</p>
+        <p><strong>Probabilidad de Derrota:</strong> {{ defeat_probability }}%</p>
+        {% endif %}
 
-    <h4>Transformación (log1p):</h4>
-    <ul>
-        <li>log1p(Kills): {{ transformed[0] }}</li>
-        <li>log1p(Flank Kills): {{ transformed[1] }}</li>
-        <li>log1p(Headshots): {{ transformed[2] }}</li>
-    </ul>
-{% endif %}
+        {% if interpretation %}
+        <p class="{% if 'fuera del rango' in interpretation %}warning{% elif 'normal' in interpretation %}success{% else %}info{% endif %}">
+            <strong>Análisis:</strong> {{ interpretation }}
+        </p>
+        {% endif %}
 
+        {% if context_warnings %}
+        <div class="warning">
+            <h4>⚠️ Advertencias:</h4>
+            <ul>
+                {% for warning in context_warnings %}
+                <li>{{ warning }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <h4>📋 Detalles:</h4>
+        <ul>
+            <li>Kills: {{ raw_input.kills }}</li>
+            <li>Flank Kills: {{ raw_input.flank_kills }}</li>
+            <li>Headshots: {{ raw_input.headshots }}</li>
+        </ul>
+
+        <h4>🔢 Transformación (log1p):</h4>
+        <ul>
+            <li>log1p(Kills): {{ "%.3f"|format(transformed[0]) }}</li>
+            <li>log1p(Flank Kills): {{ "%.3f"|format(transformed[1]) }}</li>
+            <li>log1p(Headshots): {{ "%.3f"|format(transformed[2]) }}</li>
+        </ul>
+    </div>
+
+    <div class="info" style="margin-top: 20px;">
+        <h4>🤖 Información del Modelo:</h4>
+        <p>Este modelo fue entrenado con datos donde:</p>
+        <ul>
+            <li>Rendimiento <strong>bajo/medio</strong> tiende a predecir <strong>Victoria</strong></li>
+            <li>Rendimiento <strong>muy alto</strong> puede predecir <strong>Derrota</strong> (posibles partidas competitivas)</li>
+        </ul>
+        <p><em>Endpoints adicionales: <a href="/test">/test</a> | <a href="/model-info">/model-info</a></em></p>
+    </div>
+    {% endif %}
 </body>
 </html>
