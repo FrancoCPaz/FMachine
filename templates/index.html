@@ -3,27 +3,90 @@
 <head>
     <title>Predicción de victoria en partida</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .warning { color: orange; font-weight: bold; }
-        .success { color: green; }
-        .info { color: blue; }
-        .result-box { 
-            border: 1px solid #ccc; 
-            padding: 15px; 
-            margin: 10px 0; 
-            border-radius: 5px; 
-            background-color: #f9f9f9; 
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
         }
-        .averages { 
-            background-color: #e7f3ff; 
-            padding: 10px; 
-            border-radius: 5px; 
-            margin: 10px 0; 
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .warning { color: #ff6b35; font-weight: bold; }
+        .success { color: #27ae60; font-weight: bold; }
+        .info { color: #3498db; font-weight: bold; }
+        .result-box { 
+            border: 2px solid #e74c3c;
+            padding: 20px; 
+            margin: 15px 0; 
+            border-radius: 10px; 
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .victory { border-color: #27ae60; }
+        .defeat { border-color: #e74c3c; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        .btn-predict {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn-predict:hover {
+            transform: translateY(-2px);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #3498db;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h2>Predicción de Victoria en Partida</h2>
+    <div class="container">
+        <h1 style="text-align: center; color: #2c3e50; margin-bottom: 30px;">
+            🎯 Predictor de Victoria en Partida
+        </h1>
     
     {% if model_averages %}
     <div class="averages">
@@ -36,43 +99,50 @@
     </div>
     {% endif %}
 
-    <form method="POST">
-        <label for="kills">Kills en el Match:</label>
-        <input type="number" step="1" min="0" name="kills" required><br><br>
+    <form method="POST" style="background: #f8f9fa; padding: 25px; border-radius: 10px; margin: 20px 0;">
+        <h3 style="margin-top: 0; color: #2c3e50;">📊 Ingresa tus estadísticas</h3>
+        
+        <div class="form-group">
+            <label for="kills">🎯 Kills en el Match:</label>
+            <input type="number" step="1" min="0" max="100" name="kills" required 
+                   placeholder="Ej: 15">
+        </div>
 
-        <label for="flank_kills">Flank Kills en el Match:</label>
-        <input type="number" step="1" min="0" name="flank_kills" required><br><br>
+        <div class="form-group">
+            <label for="flank_kills">⚡ Flank Kills en el Match:</label>
+            <input type="number" step="1" min="0" name="flank_kills" required 
+                   placeholder="Ej: 5">
+        </div>
 
-        <label for="headshots">Headshots en el Match:</label>
-        <input type="number" step="1" min="0" name="headshots" required><br><br>
+        <div class="form-group">
+            <label for="headshots">🎯 Headshots en el Match:</label>
+            <input type="number" step="1" min="0" name="headshots" required 
+                   placeholder="Ej: 8">
+        </div>
 
-        <input type="submit" value="Predecir">
+        <button type="submit" class="btn-predict">🚀 Predecir Resultado</button>
     </form>
 
     {% if prediction is not none %}
-    <div class="result-box">
-        <h3>🎯 Resultado de la Predicción:</h3>
-        <p><strong>Predicción:</strong> {{ prediction }}</p>
+    <div class="result-box {{ 'victory' if 'Victoria' in prediction else 'defeat' }}">
+        <h2 style="text-align: center; margin-top: 0;">
+            {% if 'Victoria' in prediction %}
+                🏆 {{ prediction }}
+            {% else %}
+                💔 {{ prediction }}
+            {% endif %}
+        </h2>
 
         {% if victory_probability %}
-        <p><strong>Probabilidad de Victoria:</strong> {{ victory_probability }}%</p>
-        <p><strong>Probabilidad de Derrota:</strong> {{ defeat_probability }}%</p>
-        {% endif %}
-
-        {% if interpretation %}
-        <p class="{% if 'fuera del rango' in interpretation %}warning{% elif 'normal' in interpretation %}success{% else %}info{% endif %}">
-            <strong>Análisis:</strong> {{ interpretation }}
-        </p>
-        {% endif %}
-
-        {% if context_warnings %}
-        <div class="warning">
-            <h4>⚠️ Advertencias:</h4>
-            <ul>
-                {% for warning in context_warnings %}
-                <li>{{ warning }}</li>
-                {% endfor %}
-            </ul>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4 style="margin: 0; color: #27ae60;">🏆 Victoria</h4>
+                <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">{{ victory_probability }}%</p>
+            </div>
+            <div class="stat-card">
+                <h4 style="margin: 0; color: #e74c3c;">💔 Derrota</h4>
+                <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">{{ defeat_probability }}%</p>
+            </div>
         </div>
         {% endif %}
 
@@ -83,22 +153,85 @@
             <li>Headshots: {{ raw_input.headshots }}</li>
         </ul>
 
-        <h4>🔢 Transformación (log1p):</h4>
+                <h4>🔢 Transformación (log1p):</h4>
         <ul>
             <li>log1p(Kills): {{ "%.3f"|format(transformed[0]) }}</li>
             <li>log1p(Flank Kills): {{ "%.3f"|format(transformed[1]) }}</li>
             <li>log1p(Headshots): {{ "%.3f"|format(transformed[2]) }}</li>
         </ul>
+
+        {% if context_warnings %}
+        <h4>⚠️ Advertencias:</h4>
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 5px;">
+            <ul style="margin: 0;">
+                {% for warning in context_warnings %}
+                <li class="warning">{{ warning }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if interpretation %}
+        <h4>🔍 Interpretación:</h4>
+        <div style="background: #e8f4fd; border: 1px solid #bee5eb; padding: 10px; border-radius: 5px;">
+            <p style="margin: 0;" class="info">{{ interpretation }}</p>
+        </div>
+        {% endif %}
     </div>
 
+    {% if victory_probability %}
+        <canvas id="probabilityChart" width="400" height="200"></canvas>
+        <script>
+            const ctx = document.getElementById('probabilityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Victoria', 'Derrota'],
+                    datasets: [{
+                        data: [{{ victory_probability }}, {{ defeat_probability }}],
+                        backgroundColor: ['#27ae60', '#e74c3c'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Probabilidades de Resultado'
+                        }
+                    }
+                }
+            });
+        </script>
+    {% endif %}
+
     <div class="info" style="margin-top: 20px;">
-        <h4>🤖 Información del Modelo:</h4>
-        <p>Este modelo fue entrenado con datos donde:</p>
+
+
+        
+        <h4>🤖 Análisis del Modelo:</h4>
+        
+        <h5>📊 Importancia de Factores:</h5>
         <ul>
-            <li>Rendimiento <strong>bajo/medio</strong> tiende a predecir <strong>Victoria</strong></li>
-            <li>Rendimiento <strong>muy alto</strong> puede predecir <strong>Derrota</strong> (posibles partidas competitivas)</li>
+            <li><strong>Kills</strong>: 48.98% - Factor más determinante</li>
+            <li><strong>Headshots</strong>: 33.12% - Segundo más importante</li>
+            <li><strong>Flank Kills</strong>: 17.90% - Menor impacto</li>
         </ul>
-        <p><em>Endpoints adicionales: <a href="/test">/test</a> | <a href="/model-info">/model-info</a></em></p>
+
+        <h5>🎯 Patrones de Predicción:</h5>
+        <ul>
+            <li><strong>0-10 kills</strong> → Tendencia a Victoria (56-65%)</li>
+            <li><strong>11-20 kills</strong> → Zona de transición</li>
+            <li><strong>20+ kills</strong> → Tendencia a Derrota (60-75%)</li>
+        </ul>
+
+        <p><strong>💡 Explicación:</strong> El modelo refleja un matchmaking balanceado donde jugadores con estadísticas muy altas enfrentan oponentes más fuertes.</p>
+        
+        <p><em>Endpoints: <a href="/test">/test</a> | <a href="/model-info">/model-info</a> | <a href="/analysis">/analysis</a></em></p>
     </div>
     {% endif %}
 </body>
