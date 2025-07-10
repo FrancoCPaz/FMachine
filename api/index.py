@@ -207,5 +207,7 @@ def model_analysis():
     
     return analysis
 
-if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+from vercel_wsgi import handle_wsgi
+
+def handler(request, context):
+    return handle_wsgi(app, request, context)
