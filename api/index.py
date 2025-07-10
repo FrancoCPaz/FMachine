@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request
 import joblib
 import numpy as np
-import pandas as pd  # NUEVO
+import pandas as pd
 import logging
 
 app = Flask(__name__)
@@ -207,7 +207,5 @@ def model_analysis():
     
     return analysis
 
-from vercel_wsgi import handle_wsgi
-
-def handler(request, context):
-    return handle_wsgi(app, request, context)
+if __name__ == "__main__":
+    app.run()
